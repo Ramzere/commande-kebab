@@ -1,4 +1,4 @@
-# Commande kebab de la team
+# JEUDI SACRÉE · commande kebab
 
 Petit site de commande groupée (naan, galette, tacos, assiette).
 

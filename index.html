@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Commande kebab de la team</title>
+<title>JEUDI SACRÉE · Commande kebab</title>
 <style>
 :root{--bg:#f3f5fa;--card:#fff;--ink:#1f2748;--mut:#5d6785;--acc:#2a406c;--acc2:#e6ecf7;--line:#dde3ef;--red:#b91432;--ok:#1f7a3d;--bad:#b91432}
 *{box-sizing:border-box}
@@ -50,7 +50,7 @@ input:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px var(--acc2
 </head>
 <body>
 <div class="wrap">
-  <h1>🌯 Commande kebab <em>de la team</em></h1>
+  <h1>🌯 JEUDI <em>SACRÉE</em></h1>
   <div class="deadline" id="deadline"></div>
   <p class="sub">Choisis ton plat, on s'adapte ensuite. Ta commande est envoyée à l'organisateur.</p>
   <div id="status"></div>
@@ -99,7 +99,7 @@ input:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px var(--acc2
 
 </div>
 
-<script src="menu.js"></script>
+<script src="menu.js?v=20261113"></script>
 <script>
 const st = {dish:null, meats:{}, sauces:[], fries:null, drink:null, payment:null}; // fries: true/false, drink: ''(none) | name
 
@@ -237,7 +237,7 @@ async function refreshStatus(){
   renderDeadline(); render();
 }
 function renderDeadline(){
-  const c = isClosed(), h = MENU.cutoffHour;
+  const c = isClosed(), h = MENU.cutoffHour || 11;
   $('deadline').className = 'deadline'+(c?' closed':'');
   $('deadline').innerHTML = c
     ? '<b>⛔ Commandes closes</b><span>La commande est passée : trop tard !</span>'
