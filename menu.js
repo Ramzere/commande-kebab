@@ -52,3 +52,35 @@ function describe(o){
     o.fries?'avec frites':'sans frites', o.drink?o.drink:'sans boisson', o.note?'('+o.note+')':null].filter(Boolean).join(', ');
 }
 
+
+
+// Popup de confirmation commune (remplace confirm()/alert() du navigateur)
+function confirmBox(title, text, okLabel, opts){
+  opts = opts || {};
+  return new Promise(resolve=>{
+    if(!document.getElementById('cb-css')){
+      const st = document.createElement('style'); st.id='cb-css';
+      st.textContent = '.cb-ov{position:fixed;inset:0;background:rgba(31,39,72,.55);display:flex;align-items:center;justify-content:center;padding:16px;z-index:9999}'
+        +'.cb{background:#fff;border-radius:20px;max-width:380px;width:100%;padding:22px;box-shadow:0 12px 40px rgba(0,0,0,.3);font:16px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#1f2748}'
+        +'.cb h3{margin:0 0 6px;font-size:20px;color:#2a406c}.cb p{margin:0 0 18px;color:#5d6785}'
+        +'.cb .acts{display:flex;gap:10px}.cb button{flex:1;border-radius:12px;padding:12px 14px;font:inherit;font-weight:800;cursor:pointer;border:1px solid #2a406c;background:#fff;color:#2a406c}'
+        +'.cb button.ok{background:#b91432;border-color:#b91432;color:#fff}.cb button.ok.info{background:#2a406c;border-color:#2a406c}';
+      document.head.appendChild(st);
+    }
+    const ov = document.createElement('div'); ov.className='cb-ov';
+    const box = document.createElement('div'); box.className='cb'; box.setAttribute('role','dialog'); box.setAttribute('aria-modal','true');
+    const h = document.createElement('h3'); h.textContent = title;
+    const p = document.createElement('p'); p.textContent = text || '';
+    const acts = document.createElement('div'); acts.className='acts';
+    const done = v => { document.removeEventListener('keydown', onKey); ov.remove(); resolve(v); };
+    const onKey = e => { if(e.key==='Escape') done(false); };
+    if(!opts.info){
+      const no = document.createElement('button'); no.type='button'; no.textContent = opts.cancelLabel || 'Annuler'; no.onclick=()=>done(false); acts.appendChild(no);
+    }
+    const ok = document.createElement('button'); ok.type='button'; ok.className='ok'+(opts.info?' info':''); ok.textContent = okLabel || 'Oui'; ok.onclick=()=>done(true); acts.appendChild(ok);
+    box.append(h,p,acts); ov.appendChild(box);
+    ov.addEventListener('click', e=>{ if(e.target===ov && !opts.info) done(false); });
+    document.addEventListener('keydown', onKey);
+    document.body.appendChild(ov); (opts.info?ok:acts.firstChild).focus();
+  });
+}

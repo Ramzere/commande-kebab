@@ -49,7 +49,7 @@ td:last-child{text-align:right;font-weight:700;color:var(--red);white-space:nowr
   </div>
 </div>
 
-<script src="menu.js?v=20261113"></script>
+<script src="menu.js?v=20261113b"></script>
 <script>
 const pass = 'azertyuiop'; // accès direct, sans écran de connexion
 let orders = [], open = true;
@@ -81,7 +81,7 @@ function render(){
   $('orders').innerHTML = orders.map(o=>'<div class="order"><div class="row"><span class="who">'+esc(o.name)+'</span><span class="pr">'+eur(orderPrice(o))
     +' <button class="x" data-del="'+esc(o.id)+'">supprimer</button></span></div><div class="hint">'+esc(describe(o))+'</div><div class="hint">💶 '+esc(o.payment||'paiement non précisé')+'</div></div>').join('');
   document.querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{
-    if(!confirm('Supprimer cette commande ?')) return;
+    if(!await confirmBox('Êtes-vous sûr ?','Supprimer la commande de '+(orders.find(o=>o.id===b.dataset.del)||{}).name+' ?','Supprimer')) return;
     try{ await rpc('admin_delete',{p_pass:pass,p_id:b.dataset.del}); load(); }catch(e){}
   });
 }
@@ -92,15 +92,15 @@ async function load(){
 setInterval(()=>{ if(pass && !document.hidden){ load(); loadStatus(); } }, 10000);
 document.addEventListener('visibilitychange',()=>{ if(pass && !document.hidden){ load(); loadStatus(); } });
 $('reset').onclick = async ()=>{
-  if(!confirm('Supprimer TOUTES les commandes ('+orders.length+') ? Cette action est irréversible.')) return;
-  try{ await rpc('admin_reset',{p_pass:pass}); await load(); }catch(e){ alert('Échec, réessaie.'); }
+  if(!await confirmBox('Êtes-vous sûr ?','Supprimer TOUTES les commandes ('+orders.length+') ? Cette action est irréversible.','Tout supprimer')) return;
+  try{ await rpc('admin_reset',{p_pass:pass}); await load(); }catch(e){ await confirmBox('Échec','Impossible de réinitialiser, réessaie.','OK',{info:true}); }
 };
 load(); loadStatus();
 $('refresh').onclick = ()=>{ load(); loadStatus(); };
 $('toggle').onclick = async ()=>{
   const next = !open;
-  if(next || confirm('Fermer les commandes ? Plus personne ne pourra commander.')){
-    try{ await rpc('admin_set_open',{p_pass:pass,p_open:next}); open=next; renderStatus(); }catch(e){ alert('Échec, réessaie.'); }
+  if(next || await confirmBox('Êtes-vous sûr ?','Fermer les commandes ? Plus personne ne pourra commander.','Fermer')){
+    try{ await rpc('admin_set_open',{p_pass:pass,p_open:next}); open=next; renderStatus(); }catch(e){ await confirmBox('Échec','Impossible de changer l\'état, réessaie.','OK',{info:true}); }
   }
 };
 $('copy').onclick = async ()=>{

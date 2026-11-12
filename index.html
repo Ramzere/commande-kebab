@@ -99,7 +99,7 @@ input:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px var(--acc2
 
 </div>
 
-<script src="menu.js?v=20261113"></script>
+<script src="menu.js?v=20261113b"></script>
 <script>
 const st = {dish:null, meats:{}, sauces:[], fries:null, drink:null, payment:null}; // fries: true/false, drink: ''(none) | name
 
@@ -225,6 +225,7 @@ async function submit(){
   }
 }
 async function cancelMine(){
+  if(!await confirmBox('Êtes-vous sûr ?','Annuler ta commande ?','Annuler ma commande',{cancelLabel:'Non, garder'})) return;
   try{ await rpc('cancel_order',{p_client_id:clientId}); myOrder=null; try{localStorage.removeItem('myOrder');}catch(e){} renderMine(); }
   catch(e){ $('status').innerHTML='<div class="msg warn">Annulation impossible, réessaie.</div>'; }
 }
