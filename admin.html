@@ -62,8 +62,13 @@ function render(){
   $('recap').innerHTML = orders.length
     ? '<table>'+Object.entries(g).map(([k,n])=>'<tr><td>'+n+' × '+esc(k)+'</td><td></td></tr>').join('')+'<tr><td><b>Total</b></td><td>'+eur(total)+'</td></tr></table>'
     : '<p class="hint">Aucune commande pour l\'instant.</p>';
+  if(orders.length){
+    const pay = {}; orders.forEach(o=>{ const k=o.payment||'Non précisé'; pay[k]=pay[k]||{n:0,t:0}; pay[k].n++; pay[k].t+=orderPrice(o); });
+    $('recap').innerHTML += '<h3 style="margin:14px 0 4px;font-size:15px;color:var(--mut)">Par moyen de paiement</h3><table>'
+      +Object.entries(pay).map(([k,v])=>'<tr><td>'+esc(k)+' · '+v.n+' commande(s)</td><td>'+eur(v.t)+'</td></tr>').join('')+'</table>';
+  }
   $('orders').innerHTML = orders.map(o=>'<div class="order"><div class="row"><span class="who">'+esc(o.name)+'</span><span class="pr">'+eur(orderPrice(o))
-    +' <button class="x" data-del="'+esc(o.id)+'">supprimer</button></span></div><div class="hint">'+esc(describe(o))+'</div></div>').join('');
+    +' <button class="x" data-del="'+esc(o.id)+'">supprimer</button></span></div><div class="hint">'+esc(describe(o))+'</div><div class="hint">💶 '+esc(o.payment||'paiement non précisé')+'</div></div>').join('');
   document.querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{
     if(!confirm('Supprimer cette commande ?')) return;
     try{ await rpc('admin_delete',{p_pass:pass,p_id:b.dataset.del}); load(); }catch(e){}
@@ -84,7 +89,7 @@ $('refresh').onclick = load;
 $('copy').onclick = async ()=>{
   const {g,total} = rec();
   const txt = 'Commande ('+orders.length+')\n'+Object.entries(g).map(([k,n])=>n+' x '+k).join('\n')
-    +'\n\nDétail :\n'+orders.map(o=>'- '+o.name+' : '+describe(o)+' ['+eur(orderPrice(o))+']').join('\n')+'\nTotal : '+eur(total);
+    +'\n\nDétail :\n'+orders.map(o=>'- '+o.name+' : '+describe(o)+' ['+eur(orderPrice(o))+', '+(o.payment||'?')+']').join('\n')+'\nTotal : '+eur(total);
   try{ await navigator.clipboard.writeText(txt); $('copied').classList.remove('hide'); setTimeout(()=>$('copied').classList.add('hide'),1800); }catch(e){}
 };
 </script>

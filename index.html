@@ -83,6 +83,12 @@ tr:first-child td{border-top:0}
     <div class="list" id="drinks" style="margin-top:10px"></div>
   </div>
 
+  <div class="card hide" id="cPay">
+    <h2>Moyen de paiement <span class="tag">requis</span></h2>
+    <p class="desc" id="payInfo"></p>
+    <div class="list" id="pays"></div>
+  </div>
+
   <div class="card hide" id="cNote"><h2>Remarque <span class="tag">optionnel</span></h2><input type="text" id="note" placeholder="Sans oignons, bien cuit…" maxlength="80" style="margin-top:10px"></div>
 
   <div class="card">
@@ -97,7 +103,7 @@ tr:first-child td{border-top:0}
 
 <script src="menu.js"></script>
 <script>
-const st = {dish:null, meats:{}, sauces:[], fries:null, drink:null}; // fries: true/false, drink: ''(none) | name
+const st = {dish:null, meats:{}, sauces:[], fries:null, drink:null, payment:null}; // fries: true/false, drink: ''(none) | name
 
 function row(html, on, onClick, cls){
   const b = document.createElement('button'); b.type='button';
@@ -106,7 +112,7 @@ function row(html, on, onClick, cls){
 
 function render(){
   const d = dishOf(st.dish), max = d?d.meats:0;
-  ['cMeat','cSauce','cFries','cDrink','cNote'].forEach(id=>$(id).classList.toggle('hide',!d));
+  ['cMeat','cSauce','cFries','cDrink','cPay','cNote'].forEach(id=>$(id).classList.toggle('hide',!d));
   if(d&&d.fixedFries) $('cFries').classList.add('hide');
 
   // plats
@@ -161,7 +167,13 @@ function render(){
     });
   }
 
-  const ok = $('name').value.trim() && d && sum(st.meats)===max && (st.fries!==null||d.fixedFries) && st.drink!==null;
+    $('payInfo').textContent = '💶 ' + MENU.payInfo;
+    $('pays').innerHTML='';
+    MENU.payments.forEach(x=>{
+      $('pays').appendChild(row('<span>'+esc(x)+'</span><span class="mark">'+(st.payment===x?'✓':'+')+'</span>', st.payment===x, ()=>{st.payment=x;render();}));
+    });
+
+  const ok = $('name').value.trim() && d && sum(st.meats)===max && (st.fries!==null||d.fixedFries) && st.drink!==null && st.payment!==null;
   $('submit').disabled = !ok;
   if(d){
     const o = cur();
@@ -173,6 +185,7 @@ function render(){
       if(sum(st.meats)!==max) missing.push((max-sum(st.meats)>0?'encore '+(max-sum(st.meats)):'trop de')+' viande'+(max>1?'s':''));
       if(st.fries===null&&!d.fixedFries) missing.push('frites oui/non');
       if(st.drink===null) missing.push('boisson oui/non');
+      if(st.payment===null) missing.push('moyen de paiement');
       $('summary').textContent = 'À compléter : '+missing.join(', ');
     }
   } else { $('price').textContent='–'; $('summary').textContent='Choisis un plat pour commencer.'; }
@@ -185,7 +198,7 @@ function trimMeats(){
   }
 }
 function cur(){
-  return {name:$('name').value.trim(), dish:st.dish, meats:Object.assign({},st.meats), sauces:st.sauces.slice(), fries:st.fries===true||!!(dishOf(st.dish)&&dishOf(st.dish).fixedFries), drink:st.drink||'', note:$('note').value.trim()};
+  return {name:$('name').value.trim(), dish:st.dish, meats:Object.assign({},st.meats), sauces:st.sauces.slice(), fries:st.fries===true||!!(dishOf(st.dish)&&dishOf(st.dish).fixedFries), drink:st.drink||'', payment:st.payment||'', note:$('note').value.trim()};
 }
 
 let clientId = null, myOrder = null;
@@ -196,16 +209,16 @@ if(!clientId){
 }
 function renderMine(){
   $('mineCard').classList.toggle('hide',!myOrder);
-  if(myOrder) $('mineTxt').textContent = describe(myOrder)+' — '+eur(orderPrice(myOrder))+'. Si tu valides à nouveau, ça remplace cette commande.';
+  if(myOrder) $('mineTxt').textContent = describe(myOrder)+' — '+eur(orderPrice(myOrder))+' · Paiement : '+(myOrder.payment||'?')+' ('+MENU.payInfo+'). Si tu valides à nouveau, ça remplace cette commande.';
 }
 async function submit(){
   const o = cur();
   $('submit').disabled = true;
   try{
-    await rpc('submit_order',{p_client_id:clientId,p_name:o.name,p_dish:o.dish,p_meats:o.meats,p_sauces:o.sauces,p_fries:o.fries,p_drink:o.drink,p_note:o.note});
+    await rpc('submit_order',{p_client_id:clientId,p_name:o.name,p_dish:o.dish,p_meats:o.meats,p_sauces:o.sauces,p_fries:o.fries,p_drink:o.drink,p_note:o.note,p_payment:o.payment});
     myOrder=o; try{localStorage.setItem('myOrder',JSON.stringify(o));}catch(e){}
     $('status').innerHTML='<div class="msg ok">Commande envoyée pour '+esc(o.name)+' ✔</div>';
-    st.dish=null; st.meats={}; st.sauces=[]; st.fries=null; st.drink=null; $('note').value='';
+    st.dish=null; st.meats={}; st.sauces=[]; st.fries=null; st.drink=null; st.payment=null; $('note').value='';
     render(); renderMine(); window.scrollTo({top:0,behavior:'smooth'});
   }catch(e){
     $('status').innerHTML='<div class="msg warn">Envoi impossible. Donne ta commande à l\'organisateur : <b>'+esc(o.name+' : '+describe(o))+'</b></div>';

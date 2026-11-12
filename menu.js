@@ -26,6 +26,8 @@ const MENU = {
   meats: ['Kebab','Tandoori','Curry','Tenders','Nuggets','Cordon bleu','Steak','Merguez','Falafel'],
   sauces: ['Ketchup','Mayonnaise','Algérienne','Harissa','Blanche','Samouraï','Andalouse','Marocaine','Barbecue','Biggy burger','Brasil'],
   maxSauces: 2,
+  payments: ['Ticket resto','Carte resto','Espèces','Wero'],
+  payInfo: 'À déposer au bureau de RRO ou MBA avant 12h',
   drinks: ['Coca','Coca zéro','Coca Cherry','Oasis tropical','Oasis pomme cassis'] // à compléter
 };
 // =========================================
