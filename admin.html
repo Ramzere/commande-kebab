@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Organisateur · Commande kebab</title>
+<style>
+:root{--bg:#150e09;--card:#1f160f;--ink:#f6ead9;--mut:#a89580;--acc:#e8873a;--line:#33251a;--ok:#6bd48a;--bad:#ff8a7a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+.wrap{max-width:760px;margin:0 auto;padding:16px 14px 80px}
+h1{font-size:24px;margin:8px 0 14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin:0 0 14px}
+input{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:12px;font:inherit;background:#1a120c;color:var(--ink)}
+.btn{background:var(--acc);color:#1a0f07;border:0;border-radius:12px;padding:12px 16px;font:inherit;font-weight:800;cursor:pointer}
+.btn.sec{background:none;color:var(--acc);border:1px solid var(--acc);font-weight:600;padding:8px 14px}
+.row{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.pr{color:var(--acc);font-weight:700;white-space:nowrap}
+.hint{color:var(--mut);font-size:13px}
+.order{border-top:1px solid var(--line);padding:10px 0}.order:first-child{border-top:0}
+.who{font-weight:700}
+.x{background:none;border:0;color:var(--bad);cursor:pointer;font-size:13px}
+table{width:100%;border-collapse:collapse}td{padding:6px 0;border-top:1px solid var(--line)}
+td:last-child{text-align:right;font-weight:700;color:var(--acc);white-space:nowrap}tr:first-child td{border-top:0}
+.err{color:var(--bad);margin-top:8px}.hide{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>👀 Organisateur · Commande kebab</h1>
+
+  <div class="card" id="login">
+    <input type="password" id="pass" placeholder="Mot de passe organisateur" autocomplete="current-password">
+    <div style="margin-top:10px"><button class="btn" id="go">Voir les commandes</button></div>
+    <div class="err hide" id="err"></div>
+  </div>
+
+  <div id="main" class="hide">
+    <div class="card">
+      <div class="row"><h2 style="margin:0;font-size:18px">Récap · <span id="count">0</span> commande(s)</h2>
+        <span><button class="btn sec" id="refresh">Actualiser</button> <button class="btn sec" id="copy">Copier</button></span></div>
+      <div id="recap" style="margin-top:12px"></div>
+      <p class="hint hide" id="copied">Copié ✔</p>
+    </div>
+    <div class="card"><div id="orders"></div></div>
+  </div>
+</div>
+
+<script src="menu.js"></script>
+<script>
+let pass = '', orders = [];
+
+function rec(){
+  const g = {}; let total = 0;
+  orders.forEach(o=>{ const k=describe(Object.assign({},o,{note:''})); g[k]=(g[k]||0)+1; total+=orderPrice(o); });
+  return {g,total};
+}
+function render(){
+  $('count').textContent = orders.length;
+  const {g,total} = rec();
+  $('recap').innerHTML = orders.length
+    ? '<table>'+Object.entries(g).map(([k,n])=>'<tr><td>'+n+' × '+esc(k)+'</td><td></td></tr>').join('')+'<tr><td><b>Total</b></td><td>'+eur(total)+'</td></tr></table>'
+    : '<p class="hint">Aucune commande pour l\'instant.</p>';
+  $('orders').innerHTML = orders.map(o=>'<div class="order"><div class="row"><span class="who">'+esc(o.name)+'</span><span class="pr">'+eur(orderPrice(o))
+    +' <button class="x" data-del="'+esc(o.id)+'">supprimer</button></span></div><div class="hint">'+esc(describe(o))+'</div></div>').join('');
+  document.querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{
+    if(!confirm('Supprimer cette commande ?')) return;
+    try{ await rpc('admin_delete',{p_pass:pass,p_id:b.dataset.del}); load(); }catch(e){}
+  });
+}
+async function load(){
+  try{ orders = await rpc('admin_list',{p_pass:pass}) || []; render(); return true; }
+  catch(e){ return false; }
+}
+$('go').onclick = async ()=>{
+  pass = $('pass').value;
+  $('err').classList.add('hide');
+  if(await load()){ $('login').classList.add('hide'); $('main').classList.remove('hide'); }
+  else { $('err').textContent='Mot de passe incorrect.'; $('err').classList.remove('hide'); }
+};
+$('pass').onkeydown = e=>{ if(e.key==='Enter') $('go').click(); };
+$('refresh').onclick = load;
+$('copy').onclick = async ()=>{
+  const {g,total} = rec();
+  const txt = 'Commande ('+orders.length+')\n'+Object.entries(g).map(([k,n])=>n+' x '+k).join('\n')
+    +'\n\nDétail :\n'+orders.map(o=>'- '+o.name+' : '+describe(o)+' ['+eur(orderPrice(o))+']').join('\n')+'\nTotal : '+eur(total);
+  try{ await navigator.clipboard.writeText(txt); $('copied').classList.remove('hide'); setTimeout(()=>$('copied').classList.add('hide'),1800); }catch(e){}
+};
+</script>
+</body>
+</html>
