@@ -104,7 +104,7 @@ $('pass').onkeydown = e=>{ if(e.key==='Enter') $('go').click(); };
 $('refresh').onclick = ()=>{ load(); loadStatus(); };
 $('toggle').onclick = async ()=>{
   const next = !open;
-  if(!next || confirm('Fermer les commandes ? Plus personne ne pourra commander.')){
+  if(next || confirm('Fermer les commandes ? Plus personne ne pourra commander.')){
     try{ await rpc('admin_set_open',{p_pass:pass,p_open:next}); open=next; renderStatus(); }catch(e){ alert('Échec, réessaie.'); }
   }
 };
