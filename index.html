@@ -215,7 +215,7 @@ async function submit(){
   $('submit').disabled = true;
   try{
     await rpc('submit_order',{p_client_id:clientId,p_name:o.name,p_dish:o.dish,p_meats:o.meats,p_sauces:o.sauces,p_fries:o.fries,p_drink:o.drink,p_note:o.note,p_payment:o.payment});
-    myOrder=o; try{localStorage.setItem('myOrder',JSON.stringify(o));}catch(e){}
+    o.round=round; myOrder=o; try{localStorage.setItem('myOrder',JSON.stringify(o));}catch(e){}
     $('status').innerHTML='<div class="msg ok">Commande envoyée pour '+esc(o.name)+' ✔</div>';
     st.dish=null; st.meats={}; st.sauces=[]; st.fries=null; st.drink=null; st.payment=null; $('note').value='';
     render(); renderMine(); window.scrollTo({top:0,behavior:'smooth'});
@@ -230,10 +230,17 @@ async function cancelMine(){
 }
 
 $('name').oninput=()=>{ $('name').value=$('name').value.toUpperCase().replace(/[^A-Z]/g,'').slice(0,3); render(); }; $('note').oninput=render;
-let ordersOpen = true;
+let ordersOpen = true, round = 1;
 function isClosed(){ return !ordersOpen; }
 async function refreshStatus(){
   try{ const v = await rpc('get_status',{}); if(typeof v==='boolean') ordersOpen = v; }catch(e){}
+  try{
+    const r = await rpc('get_round',{});
+    if(typeof r==='number'){
+      round = r;
+      if(myOrder && (myOrder.round||1)!==round){ myOrder=null; try{localStorage.removeItem('myOrder');}catch(e){} renderMine(); }
+    }
+  }catch(e){}
   renderDeadline(); render();
 }
 function renderDeadline(){

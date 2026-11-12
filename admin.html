@@ -50,6 +50,8 @@ td:last-child{text-align:right;font-weight:700;color:var(--red);white-space:nowr
       <p class="hint hide" id="copied">Copié ✔</p>
     </div>
     <div class="card"><div id="orders"></div></div>
+    <div class="card"><div class="row"><div><b>Nouvelle session</b><div class="hint">Supprime toutes les commandes pour la prochaine fois. Irréversible.</div></div>
+      <button class="btn sec" id="reset" style="color:var(--red);border-color:var(--red)">Réinitialiser</button></div></div>
   </div>
 </div>
 
@@ -101,6 +103,10 @@ $('go').onclick = async ()=>{
 setInterval(()=>{ if(pass && !document.hidden){ load(); loadStatus(); } }, 10000);
 document.addEventListener('visibilitychange',()=>{ if(pass && !document.hidden){ load(); loadStatus(); } });
 $('pass').onkeydown = e=>{ if(e.key==='Enter') $('go').click(); };
+$('reset').onclick = async ()=>{
+  if(!confirm('Supprimer TOUTES les commandes ('+orders.length+') ? Cette action est irréversible.')) return;
+  try{ await rpc('admin_reset',{p_pass:pass}); await load(); }catch(e){ alert('Échec, réessaie.'); }
+};
 $('refresh').onclick = ()=>{ load(); loadStatus(); };
 $('toggle').onclick = async ()=>{
   const next = !open;
