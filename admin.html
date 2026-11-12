@@ -6,23 +6,25 @@
 <meta name="robots" content="noindex,nofollow">
 <title>Organisateur · Commande kebab</title>
 <style>
-:root{--bg:#150e09;--card:#1f160f;--ink:#f6ead9;--mut:#a89580;--acc:#e8873a;--line:#33251a;--ok:#6bd48a;--bad:#ff8a7a}
+:root{--bg:#f3f5fa;--card:#fff;--ink:#1f2748;--mut:#5d6785;--acc:#2a406c;--acc2:#e6ecf7;--line:#dde3ef;--red:#b91432;--ok:#1f7a3d;--bad:#b91432}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
 .wrap{max-width:760px;margin:0 auto;padding:16px 14px 80px}
-h1{font-size:24px;margin:8px 0 14px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin:0 0 14px}
-input{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:12px;font:inherit;background:#1a120c;color:var(--ink)}
-.btn{background:var(--acc);color:#1a0f07;border:0;border-radius:12px;padding:12px 16px;font:inherit;font-weight:800;cursor:pointer}
-.btn.sec{background:none;color:var(--acc);border:1px solid var(--acc);font-weight:600;padding:8px 14px}
+h1{font-size:24px;margin:8px 0 14px;color:var(--acc)}
+h2,h3{color:var(--acc)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin:0 0 14px;box-shadow:0 1px 3px rgba(31,39,72,.06)}
+input{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:12px;font:inherit;background:#fff;color:var(--ink)}
+input:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px var(--acc2)}
+.btn{background:var(--acc);color:#fff;border:0;border-radius:12px;padding:12px 16px;font:inherit;font-weight:800;cursor:pointer}
+.btn.sec{background:#fff;color:var(--acc);border:1px solid var(--acc);font-weight:600;padding:8px 14px}
 .row{display:flex;justify-content:space-between;gap:10px;align-items:center}
-.pr{color:var(--acc);font-weight:700;white-space:nowrap}
+.pr{color:var(--red);font-weight:700;white-space:nowrap}
 .hint{color:var(--mut);font-size:13px}
 .order{border-top:1px solid var(--line);padding:10px 0}.order:first-child{border-top:0}
-.who{font-weight:700}
-.x{background:none;border:0;color:var(--bad);cursor:pointer;font-size:13px}
+.who{font-weight:700;letter-spacing:.08em}
+.x{background:none;border:0;color:var(--bad);cursor:pointer;font-size:13px;text-decoration:underline}
 table{width:100%;border-collapse:collapse}td{padding:6px 0;border-top:1px solid var(--line)}
-td:last-child{text-align:right;font-weight:700;color:var(--acc);white-space:nowrap}tr:first-child td{border-top:0}
+td:last-child{text-align:right;font-weight:700;color:var(--red);white-space:nowrap}tr:first-child td{border-top:0}
 .err{color:var(--bad);margin-top:8px}.hide{display:none}
 </style>
 </head>
@@ -57,7 +59,7 @@ let pass = '', orders = [], open = true;
 function renderStatus(){
   $('statusTxt').textContent = open ? '🟢 Commandes ouvertes' : '🔴 Commandes fermées';
   $('toggle').textContent = open ? 'Fermer les commandes' : 'Ouvrir les commandes';
-  $('toggle').style.background = open ? '#b3261e' : '';
+  $('toggle').style.background = open ? 'var(--red)' : '';
   $('toggle').style.color = open ? '#fff' : '';
 }
 async function loadStatus(){ try{ const v = await rpc('get_status',{}); if(typeof v==='boolean') open=v; }catch(e){} renderStatus(); }
