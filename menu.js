@@ -27,6 +27,7 @@ const MENU = {
   sauces: ['Ketchup','Mayonnaise','Algérienne','Harissa','Blanche','Samouraï','Andalouse','Marocaine','Barbecue','Biggy burger','Brasil'],
   maxSauces: 2,
   payments: ['Ticket resto','Carte resto','Espèces','Wero'],
+  cutoffHour: 11, // heure limite (Paris) : après, les commandes sont closes
   payInfo: 'À déposer au bureau de RRO ou MBA avant 12h',
   drinks: ['Coca','Coca zéro','Coca Cherry','Oasis tropical','Oasis pomme cassis'] // à compléter
 };

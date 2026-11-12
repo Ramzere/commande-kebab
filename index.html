@@ -11,6 +11,10 @@ body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 system-ui,-app
 .wrap{max-width:720px;margin:0 auto;padding:16px 14px 90px}
 h1{font-size:26px;margin:8px 0 2px}
 .sub{color:var(--mut);margin:0 0 16px}
+.deadline{background:var(--acc);color:#1a0f07;border-radius:18px;padding:18px 16px;margin:0 0 16px;text-align:center}
+.deadline b{display:block;font-size:30px;line-height:1.1;font-weight:900}
+.deadline span{display:block;margin-top:6px;font-size:16px;font-weight:700}
+.deadline.closed{background:#b3261e;color:#fff}
 .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin:0 0 14px}
 h2{font-size:17px;margin:0 0 4px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .tag{font-size:12px;font-weight:500;background:var(--acc2);color:var(--acc);padding:3px 9px;border-radius:8px}
@@ -54,10 +58,11 @@ tr:first-child td{border-top:0}
 <body>
 <div class="wrap">
   <h1>🌯 Commande kebab de la team</h1>
+  <div class="deadline" id="deadline"></div>
   <p class="sub">Choisis ton plat, on s'adapte ensuite. Ta commande est envoyée à l'organisateur.</p>
   <div id="status"></div>
 
-  <div class="card"><h2>Ton prénom</h2><input type="text" id="name" placeholder="Ex : Rémi" maxlength="30" autocomplete="given-name"></div>
+  <div class="card"><h2>Ton trigramme <span class="tag">requis</span></h2><input type="text" id="name" placeholder="Ex : RRO" maxlength="3" autocomplete="off" autocapitalize="characters" style="margin-top:10px;text-transform:uppercase;letter-spacing:.2em;font-weight:700"></div>
 
   <div class="card"><h2>1. Ton plat <span class="tag">requis</span></h2><div class="list" id="dishes" style="margin-top:10px"></div></div>
 
@@ -173,7 +178,7 @@ function render(){
       $('pays').appendChild(row('<span>'+esc(x)+'</span><span class="mark">'+(st.payment===x?'✓':'+')+'</span>', st.payment===x, ()=>{st.payment=x;render();}));
     });
 
-  const ok = $('name').value.trim() && d && sum(st.meats)===max && (st.fries!==null||d.fixedFries) && st.drink!==null && st.payment!==null;
+  const ok = !isClosed() && /^[A-Z]{3}$/.test($('name').value.trim().toUpperCase()) && d && sum(st.meats)===max && (st.fries!==null||d.fixedFries) && st.drink!==null && st.payment!==null;
   $('submit').disabled = !ok;
   if(d){
     const o = cur();
@@ -181,12 +186,12 @@ function render(){
     if(ok) $('summary').textContent = describe(o);
     else {
       const missing = [];
-      if(!$('name').value.trim()) missing.push('ton prénom');
+      if(!/^[A-Z]{3}$/.test($('name').value.trim().toUpperCase())) missing.push('ton trigramme (3 lettres)');
       if(sum(st.meats)!==max) missing.push((max-sum(st.meats)>0?'encore '+(max-sum(st.meats)):'trop de')+' viande'+(max>1?'s':''));
       if(st.fries===null&&!d.fixedFries) missing.push('frites oui/non');
       if(st.drink===null) missing.push('boisson oui/non');
       if(st.payment===null) missing.push('moyen de paiement');
-      $('summary').textContent = 'À compléter : '+missing.join(', ');
+      $('summary').textContent = isClosed() ? 'Commandes closes : il est trop tard.' : 'À compléter : '+missing.join(', ');
     }
   } else { $('price').textContent='–'; $('summary').textContent='Choisis un plat pour commencer.'; }
 }
@@ -198,7 +203,7 @@ function trimMeats(){
   }
 }
 function cur(){
-  return {name:$('name').value.trim(), dish:st.dish, meats:Object.assign({},st.meats), sauces:st.sauces.slice(), fries:st.fries===true||!!(dishOf(st.dish)&&dishOf(st.dish).fixedFries), drink:st.drink||'', payment:st.payment||'', note:$('note').value.trim()};
+  return {name:$('name').value.trim().toUpperCase(), dish:st.dish, meats:Object.assign({},st.meats), sauces:st.sauces.slice(), fries:st.fries===true||!!(dishOf(st.dish)&&dishOf(st.dish).fixedFries), drink:st.drink||'', payment:st.payment||'', note:$('note').value.trim()};
 }
 
 let clientId = null, myOrder = null;
@@ -212,6 +217,7 @@ function renderMine(){
   if(myOrder) $('mineTxt').textContent = describe(myOrder)+' — '+eur(orderPrice(myOrder))+' · Paiement : '+(myOrder.payment||'?')+' ('+MENU.payInfo+'). Si tu valides à nouveau, ça remplace cette commande.';
 }
 async function submit(){
+  if(isClosed()) return;
   const o = cur();
   $('submit').disabled = true;
   try{
@@ -230,7 +236,17 @@ async function cancelMine(){
   catch(e){ $('status').innerHTML='<div class="msg warn">Annulation impossible, réessaie.</div>'; }
 }
 
-$('name').oninput=render; $('note').oninput=render;
+$('name').oninput=()=>{ $('name').value=$('name').value.toUpperCase().replace(/[^A-Z]/g,'').slice(0,3); render(); }; $('note').oninput=render;
+function parisHour(){ return parseInt(new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Paris',hour:'numeric',hour12:false}).format(new Date()),10)%24; }
+function isClosed(){ return parisHour() >= MENU.cutoffHour; }
+function renderDeadline(){
+  const c = isClosed(), h = MENU.cutoffHour;
+  $('deadline').className = 'deadline'+(c?' closed':'');
+  $('deadline').innerHTML = c
+    ? '<b>⛔ Commandes closes</b><span>Il est plus de '+h+'h : la commande est déjà passée.</span>'
+    : '<b>⏰ Commandes jusqu\'à '+h+'h</b><span>Au-delà de '+h+'h, la commande est passée : trop tard !</span>';
+}
+renderDeadline(); setInterval(()=>{ renderDeadline(); render(); }, 30000);
 $('submit').onclick=submit;
 $('mineDel').onclick=cancelMine;
 render();
