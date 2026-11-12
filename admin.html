@@ -37,6 +37,10 @@ td:last-child{text-align:right;font-weight:700;color:var(--acc);white-space:nowr
   </div>
 
   <div id="main" class="hide">
+    <div class="card" id="statusCard">
+      <div class="row"><div><div id="statusTxt" style="font-size:20px;font-weight:800"></div><div class="hint">Les invités voient le changement en quelques secondes.</div></div>
+        <button class="btn" id="toggle">…</button></div>
+    </div>
     <div class="card">
       <div class="row"><h2 style="margin:0;font-size:18px">Récap · <span id="count">0</span> commande(s)</h2>
         <span><button class="btn sec" id="refresh">Actualiser</button> <button class="btn sec" id="copy">Copier</button></span></div>
@@ -49,7 +53,15 @@ td:last-child{text-align:right;font-weight:700;color:var(--acc);white-space:nowr
 
 <script src="menu.js"></script>
 <script>
-let pass = '', orders = [];
+let pass = '', orders = [], open = true;
+function renderStatus(){
+  $('statusTxt').textContent = open ? '🟢 Commandes ouvertes' : '🔴 Commandes fermées';
+  $('toggle').textContent = open ? 'Fermer les commandes' : 'Ouvrir les commandes';
+  $('toggle').style.background = open ? '#b3261e' : '';
+  $('toggle').style.color = open ? '#fff' : '';
+}
+async function loadStatus(){ try{ const v = await rpc('get_status',{}); if(typeof v==='boolean') open=v; }catch(e){} renderStatus(); }
+
 
 function rec(){
   const g = {}; let total = 0;
@@ -81,11 +93,17 @@ async function load(){
 $('go').onclick = async ()=>{
   pass = $('pass').value;
   $('err').classList.add('hide');
-  if(await load()){ $('login').classList.add('hide'); $('main').classList.remove('hide'); }
+  if(await load()){ $('login').classList.add('hide'); $('main').classList.remove('hide'); loadStatus(); }
   else { $('err').textContent='Mot de passe incorrect.'; $('err').classList.remove('hide'); }
 };
 $('pass').onkeydown = e=>{ if(e.key==='Enter') $('go').click(); };
-$('refresh').onclick = load;
+$('refresh').onclick = ()=>{ load(); loadStatus(); };
+$('toggle').onclick = async ()=>{
+  const next = !open;
+  if(!next || confirm('Fermer les commandes ? Plus personne ne pourra commander.')){
+    try{ await rpc('admin_set_open',{p_pass:pass,p_open:next}); open=next; renderStatus(); }catch(e){ alert('Échec, réessaie.'); }
+  }
+};
 $('copy').onclick = async ()=>{
   const {g,total} = rec();
   const txt = 'Commande ('+orders.length+')\n'+Object.entries(g).map(([k,n])=>n+' x '+k).join('\n')

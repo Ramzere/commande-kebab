@@ -228,7 +228,7 @@ async function submit(){
     render(); renderMine(); window.scrollTo({top:0,behavior:'smooth'});
   }catch(e){
     $('status').innerHTML='<div class="msg warn">Envoi impossible. Donne ta commande à l\'organisateur : <b>'+esc(o.name+' : '+describe(o))+'</b></div>';
-    render();
+    render(); refreshStatus();
   }
 }
 async function cancelMine(){
@@ -237,16 +237,20 @@ async function cancelMine(){
 }
 
 $('name').oninput=()=>{ $('name').value=$('name').value.toUpperCase().replace(/[^A-Z]/g,'').slice(0,3); render(); }; $('note').oninput=render;
-function parisHour(){ return parseInt(new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Paris',hour:'numeric',hour12:false}).format(new Date()),10)%24; }
-function isClosed(){ return parisHour() >= MENU.cutoffHour; }
+let ordersOpen = true;
+function isClosed(){ return !ordersOpen; }
+async function refreshStatus(){
+  try{ const v = await rpc('get_status',{}); if(typeof v==='boolean') ordersOpen = v; }catch(e){}
+  renderDeadline(); render();
+}
 function renderDeadline(){
   const c = isClosed(), h = MENU.cutoffHour;
   $('deadline').className = 'deadline'+(c?' closed':'');
   $('deadline').innerHTML = c
-    ? '<b>⛔ Commandes closes</b><span>Il est plus de '+h+'h : la commande est déjà passée.</span>'
+    ? '<b>⛔ Commandes closes</b><span>La commande est passée : trop tard !</span>'
     : '<b>⏰ Commandes jusqu\'à '+h+'h</b><span>Au-delà de '+h+'h, la commande est passée : trop tard !</span>';
 }
-renderDeadline(); setInterval(()=>{ renderDeadline(); render(); }, 30000);
+renderDeadline(); refreshStatus(); setInterval(refreshStatus, 20000);
 $('submit').onclick=submit;
 $('mineDel').onclick=cancelMine;
 render();
