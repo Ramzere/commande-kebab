@@ -98,6 +98,8 @@ $('go').onclick = async ()=>{
   if(await load()){ $('login').classList.add('hide'); $('main').classList.remove('hide'); loadStatus(); }
   else { $('err').textContent='Mot de passe incorrect.'; $('err').classList.remove('hide'); }
 };
+setInterval(()=>{ if(pass && !document.hidden){ load(); loadStatus(); } }, 10000);
+document.addEventListener('visibilitychange',()=>{ if(pass && !document.hidden){ load(); loadStatus(); } });
 $('pass').onkeydown = e=>{ if(e.key==='Enter') $('go').click(); };
 $('refresh').onclick = ()=>{ load(); loadStatus(); };
 $('toggle').onclick = async ()=>{
