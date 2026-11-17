@@ -9,23 +9,36 @@
 :root{--bg:#f3f5fa;--card:#fff;--ink:#1f2748;--mut:#5d6785;--acc:#2a406c;--acc2:#e6ecf7;--line:#dde3ef;--red:#b91432;--ok:#1f7a3d;--bad:#b91432}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
-.wrap{max-width:760px;margin:0 auto;padding:16px 14px 80px}
+.wrap{max-width:980px;margin:0 auto;padding:16px 14px 80px}
 h1{font-size:24px;margin:8px 0 14px;color:var(--acc)}
 h2,h3{color:var(--acc)}
 .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin:0 0 14px;box-shadow:0 1px 3px rgba(31,39,72,.06)}
-input{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:12px;font:inherit;background:#fff;color:var(--ink)}
-input:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px var(--acc2)}
 .btn{background:var(--acc);color:#fff;border:0;border-radius:12px;padding:12px 16px;font:inherit;font-weight:800;cursor:pointer}
 .btn.sec{background:#fff;color:var(--acc);border:1px solid var(--acc);font-weight:600;padding:8px 14px}
-.row{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.row{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
 .pr{color:var(--red);font-weight:700;white-space:nowrap}
 .hint{color:var(--mut);font-size:13px}
-.order{border-top:1px solid var(--line);padding:10px 0}.order:first-child{border-top:0}
-.who{font-weight:700;letter-spacing:.08em}
 .x{background:none;border:0;color:var(--bad);cursor:pointer;font-size:13px;text-decoration:underline}
-table{width:100%;border-collapse:collapse}td{padding:6px 0;border-top:1px solid var(--line)}
-td:last-child{text-align:right;font-weight:700;color:var(--red);white-space:nowrap}tr:first-child td{border-top:0}
-.err{color:var(--bad);margin-top:8px}.hide{display:none}
+.scroll{overflow-x:auto;margin-top:12px}
+table{width:100%;border-collapse:collapse}
+.tbl th{position:sticky;top:0;text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--mut);padding:8px 8px;border-bottom:2px solid var(--line);white-space:nowrap;user-select:none}
+.tbl th.s{cursor:pointer}
+.tbl th.s:hover{color:var(--acc)}
+.tbl th.on{color:var(--acc);background:var(--acc2)}
+.tbl td{padding:9px 8px;border-top:1px solid var(--line);font-size:14px;vertical-align:top}
+.tbl tr:first-child td{border-top:0}
+.tbl td.num{text-align:right;white-space:nowrap}
+.tbl td.tri{font-weight:800;letter-spacing:.08em}
+.tbl td.pr{text-align:right}
+.tbl tbody tr:hover{background:#f8f9fd}
+.sum td{padding:6px 0;border-top:1px solid var(--line)}
+.sum tr:first-child td{border-top:0}
+.sum td:last-child{text-align:right;font-weight:700;color:var(--red);white-space:nowrap}
+.seg{display:inline-flex;border:1px solid var(--acc);border-radius:12px;overflow:hidden}
+.seg button{background:#fff;color:var(--acc);border:0;padding:8px 14px;font:inherit;font-weight:600;cursor:pointer}
+.seg button.on{background:var(--acc);color:#fff}
+.chip{display:inline-block;background:var(--acc2);color:var(--acc);border-radius:8px;padding:2px 8px;margin:1px 4px 1px 0;font-weight:700;font-size:12px;letter-spacing:.06em}
+.hide{display:none}
 </style>
 </head>
 <body>
@@ -37,22 +50,42 @@ td:last-child{text-align:right;font-weight:700;color:var(--red);white-space:nowr
       <div class="row"><div><div id="statusTxt" style="font-size:20px;font-weight:800"></div><div class="hint">Les invités voient le changement en quelques secondes.</div></div>
         <button class="btn" id="toggle">…</button></div>
     </div>
+
     <div class="card">
-      <div class="row"><h2 style="margin:0;font-size:18px">Récap · <span id="count">0</span> commande(s)</h2>
-        <span><button class="btn sec" id="refresh">Actualiser</button> <button class="btn sec" id="copy">Copier</button></span></div>
-      <div id="recap" style="margin-top:12px"></div>
+      <div class="row">
+        <h2 style="margin:0;font-size:18px">Commandes · <span id="count">0</span></h2>
+        <span class="row" style="gap:8px">
+          <span class="seg" id="seg"><button data-g="0" class="on">Par personne</button><button data-g="1">Regrouper</button></span>
+          <button class="btn sec" id="refresh">Actualiser</button>
+          <button class="btn sec" id="copy">Copier</button>
+        </span>
+      </div>
+      <p class="hint" style="margin:8px 0 0" id="sortHint"></p>
+      <div class="scroll"><table class="tbl" id="tbl"></table></div>
       <p class="hint hide" id="copied">Copié ✔</p>
     </div>
-    <div class="card"><div id="orders"></div></div>
+
+    <div class="card">
+      <h2 style="margin:0 0 4px;font-size:18px">🥤 Boissons</h2>
+      <div class="scroll" style="margin-top:6px"><table class="tbl" id="drinks"></table></div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin:0 0 6px;font-size:18px">💶 Total</h2>
+      <div id="totals"></div>
+    </div>
+
     <div class="card"><div class="row"><div><b>Nouvelle session</b><div class="hint">Supprime toutes les commandes pour la prochaine fois. Irréversible.</div></div>
       <button class="btn sec" id="reset" style="color:var(--red);border-color:var(--red)">Réinitialiser</button></div></div>
   </div>
 </div>
 
-<script src="menu.js?v=20261113b"></script>
+<script src="menu.js?v=20261117"></script>
 <script>
 const pass = 'azertyuiop'; // accès direct, sans écran de connexion
 let orders = [], open = true;
+let sortKey = 'dish', sortDir = 1, grouped = false;
+
 function renderStatus(){
   $('statusTxt').textContent = open ? '🟢 Commandes ouvertes' : '🔴 Commandes fermées';
   $('toggle').textContent = open ? 'Fermer les commandes' : 'Ouvrir les commandes';
@@ -61,41 +94,113 @@ function renderStatus(){
 }
 async function loadStatus(){ try{ const v = await rpc('get_status',{}); if(typeof v==='boolean') open=v; }catch(e){} renderStatus(); }
 
+// ---- Colonnes (même ordre logique que le choix côté équipe) ----
+const idx = (arr, v) => { const i = arr.indexOf(v); return i < 0 ? 99 : i; };
+const COLS = {
+  name:    {t:'TRI',      key:o=>(o.name||'').toLowerCase(), show:o=>esc(o.name), cls:'tri'},
+  dish:    {t:'Plat',     key:o=>{ const i=MENU.dishes.findIndex(d=>d.id===o.dish); return i<0?99:i; }, show:o=>esc((dishOf(o.dish)||{name:o.dish}).name)},
+  meats:   {t:'Viande',   key:o=>meatsText(o.meats).toLowerCase(), show:o=>esc(meatsText(o.meats))},
+  sauces:  {t:'Sauces',   key:o=>(o.sauces||[]).slice().sort().join('+').toLowerCase(), show:o=>(o.sauces&&o.sauces.length)?esc(o.sauces.join(' + ')):'—'},
+  fries:   {t:'Frites',   key:o=>o.fries?1:0, show:o=>o.fries?'Avec':'Sans'},
+  payment: {t:'Paiement', key:o=>idx(MENU.payments,o.payment), show:o=>esc(o.payment||'?')},
+  note:    {t:'Remarque', key:o=>(o.note||'').toLowerCase(), show:o=>esc(o.note||'')},
+  qty:     {t:'Qté',      key:o=>o.qty, show:o=>'× '+o.qty, cls:'num'},
+  price:   {t:'Prix',     key:o=>o.price, show:o=>eur(o.price), cls:'pr'}
+};
+// ordre de tri "logique" : plat → viande → sauces → frites → paiement → trigramme
+const NAT_DETAIL  = ['dish','meats','sauces','fries','payment','name','note'];
+const NAT_GROUPED = ['dish','meats','sauces','fries','note'];
 
-function rec(){
-  const g = {}; let total = 0;
-  orders.forEach(o=>{ const k=describe(Object.assign({},o,{note:''})); g[k]=(g[k]||0)+1; total+=orderPrice(o); });
-  return {g,total};
+function cmp(a,b,keys){
+  for(let i=0;i<keys.length;i++){
+    const k = keys[i], x = COLS[k].key(a), y = COLS[k].key(b);
+    let c = (typeof x==='number' && typeof y==='number') ? x-y : String(x).localeCompare(String(y),'fr');
+    if(c) return i===0 ? c*sortDir : c;
+  }
+  return 0;
 }
+
+function rows(){
+  const hasNote = orders.some(o=>o.note);
+  if(!grouped){
+    const keys = [sortKey].concat(NAT_DETAIL.filter(k=>k!==sortKey));
+    const list = orders.map(o=>Object.assign({},o,{price:orderPrice(o)})).sort((a,b)=>cmp(a,b,keys));
+    const cols = ['name','dish','meats','sauces','fries','payment'].concat(hasNote?['note']:[],['price']);
+    return {list, cols, keys};
+  }
+  const g = {};
+  orders.forEach(o=>{
+    const k = [o.dish, meatsText(o.meats), (o.sauces||[]).slice().sort().join('+'), o.fries, (o.note||'')].join('|');
+    g[k] = g[k] || Object.assign({},o,{qty:0,price:0});
+    g[k].qty++; g[k].price += orderPrice(o);
+  });
+  const key0 = (sortKey in COLS && (sortKey==='qty' || NAT_GROUPED.includes(sortKey))) ? sortKey : 'dish';
+  const keys = [key0].concat(NAT_GROUPED.filter(k=>k!==key0));
+  const list = Object.values(g).sort((a,b)=>cmp(a,b,keys));
+  const cols = ['qty','dish','meats','sauces','fries'].concat(hasNote?['note']:[],['price']);
+  return {list, cols, keys};
+}
+
 function render(){
   $('count').textContent = orders.length;
-  const {g,total} = rec();
-  $('recap').innerHTML = orders.length
-    ? '<table>'+Object.entries(g).map(([k,n])=>'<tr><td>'+n+' × '+esc(k)+'</td><td></td></tr>').join('')+'<tr><td><b>Total</b></td><td>'+eur(total)+'</td></tr></table>'
-    : '<p class="hint">Aucune commande pour l\'instant.</p>';
-  if(orders.length){
-    const pay = {}; orders.forEach(o=>{ const k=o.payment||'Non précisé'; pay[k]=pay[k]||{n:0,t:0}; pay[k].n++; pay[k].t+=orderPrice(o); });
-    $('recap').innerHTML += '<h3 style="margin:14px 0 4px;font-size:15px;color:var(--mut)">Par moyen de paiement</h3><table>'
-      +Object.entries(pay).map(([k,v])=>'<tr><td>'+esc(k)+' · '+v.n+' commande(s)</td><td>'+eur(v.t)+'</td></tr>').join('')+'</table>';
+  document.querySelectorAll('#seg button').forEach(b=>b.classList.toggle('on', (b.dataset.g==='1')===grouped));
+
+  // ---- tableau principal ----
+  if(!orders.length){
+    $('tbl').innerHTML = '<tbody><tr><td class="hint">Aucune commande pour l\'instant.</td></tr></tbody>';
+    $('sortHint').textContent = '';
+  } else {
+    const {list, cols, keys} = rows();
+    const prim = keys[0];
+    const sortable = c => c!=='price';
+    $('tbl').innerHTML = '<thead><tr>'+cols.map(c=>'<th class="'+(sortable(c)?'s':'')+(c===prim?' on':'')+'" data-k="'+c+'">'+COLS[c].t+(c===prim?(sortDir>0?' ▲':' ▼'):'')+'</th>').join('')+(grouped?'':'<th></th>')+'</tr></thead><tbody>'
+      + list.map(o=>'<tr>'+cols.map(c=>'<td class="'+(COLS[c].cls||'')+'">'+COLS[c].show(o)+'</td>').join('')
+        +(grouped?'':'<td class="num"><button class="x" data-del="'+esc(o.id)+'">supprimer</button></td>')+'</tr>').join('')+'</tbody>';
+    $('sortHint').textContent = 'Clique sur un titre de colonne pour trier. Ordre appliqué : '+keys.filter(k=>cols.includes(k)).map(k=>COLS[k].t).join(' → ')+'.';
+    document.querySelectorAll('#tbl th.s').forEach(th=>th.onclick=()=>{
+      const k = th.dataset.k;
+      if(sortKey===k) sortDir = -sortDir; else { sortKey = k; sortDir = 1; }
+      render();
+    });
+    document.querySelectorAll('#tbl [data-del]').forEach(b=>b.onclick=async()=>{
+      const who = (orders.find(o=>o.id===b.dataset.del)||{}).name;
+      if(!await confirmBox('Êtes-vous sûr ?','Supprimer la commande de '+who+' ?','Supprimer')) return;
+      try{ await rpc('admin_delete',{p_pass:pass,p_id:b.dataset.del}); load(); }catch(e){}
+    });
   }
-  $('orders').innerHTML = orders.map(o=>'<div class="order"><div class="row"><span class="who">'+esc(o.name)+'</span><span class="pr">'+eur(orderPrice(o))
-    +' <button class="x" data-del="'+esc(o.id)+'">supprimer</button></span></div><div class="hint">'+esc(describe(o))+'</div><div class="hint">💶 '+esc(o.payment||'paiement non précisé')+'</div></div>').join('');
-  document.querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{
-    if(!await confirmBox('Êtes-vous sûr ?','Supprimer la commande de '+(orders.find(o=>o.id===b.dataset.del)||{}).name+' ?','Supprimer')) return;
-    try{ await rpc('admin_delete',{p_pass:pass,p_id:b.dataset.del}); load(); }catch(e){}
-  });
+
+  // ---- boissons à part ----
+  const dr = {};
+  orders.filter(o=>o.drink).forEach(o=>{ (dr[o.drink]=dr[o.drink]||[]).push(o.name); });
+  const names = Object.keys(dr).sort((a,b)=>idx(MENU.drinks,a)-idx(MENU.drinks,b) || a.localeCompare(b,'fr'));
+  $('drinks').innerHTML = names.length
+    ? '<thead><tr><th>Boisson</th><th>Qté</th><th>TRI</th></tr></thead><tbody>'
+      + names.map(n=>'<tr><td>'+esc(n)+'</td><td class="num">× '+dr[n].length+'</td><td>'+dr[n].slice().sort().map(x=>'<span class="chip">'+esc(x)+'</span>').join('')+'</td></tr>').join('')
+      + '<tr><td><b>Total</b></td><td class="num"><b>'+names.reduce((s,n)=>s+dr[n].length,0)+'</b></td><td></td></tr></tbody>'
+    : '<tbody><tr><td class="hint">Aucune boisson.</td></tr></tbody>';
+
+  // ---- totaux ----
+  if(!orders.length){ $('totals').innerHTML = '<p class="hint" style="margin:0">—</p>'; return; }
+  const pay = {}; let total = 0;
+  orders.forEach(o=>{ const k=o.payment||'Non précisé'; pay[k]=pay[k]||{n:0,t:0}; pay[k].n++; pay[k].t+=orderPrice(o); total+=orderPrice(o); });
+  const pk = Object.keys(pay).sort((a,b)=>idx(MENU.payments,a)-idx(MENU.payments,b));
+  $('totals').innerHTML = '<table class="sum">'
+    + pk.map(k=>'<tr><td>'+esc(k)+' · '+pay[k].n+' commande(s)</td><td>'+eur(pay[k].t)+'</td></tr>').join('')
+    + '<tr><td><b>Total général</b></td><td>'+eur(total)+'</td></tr></table>';
 }
+
 async function load(){
   try{ orders = await rpc('admin_list',{p_pass:pass}) || []; render(); return true; }
   catch(e){ return false; }
 }
-setInterval(()=>{ if(pass && !document.hidden){ load(); loadStatus(); } }, 10000);
-document.addEventListener('visibilitychange',()=>{ if(pass && !document.hidden){ load(); loadStatus(); } });
+setInterval(()=>{ if(!document.hidden){ load(); loadStatus(); } }, 10000);
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden){ load(); loadStatus(); } });
+
+document.querySelectorAll('#seg button').forEach(b=>b.onclick=()=>{ grouped = b.dataset.g==='1'; render(); });
 $('reset').onclick = async ()=>{
   if(!await confirmBox('Êtes-vous sûr ?','Supprimer TOUTES les commandes ('+orders.length+') ? Cette action est irréversible.','Tout supprimer')) return;
   try{ await rpc('admin_reset',{p_pass:pass}); await load(); }catch(e){ await confirmBox('Échec','Impossible de réinitialiser, réessaie.','OK',{info:true}); }
 };
-load(); loadStatus();
 $('refresh').onclick = ()=>{ load(); loadStatus(); };
 $('toggle').onclick = async ()=>{
   const next = !open;
@@ -104,11 +209,16 @@ $('toggle').onclick = async ()=>{
   }
 };
 $('copy').onclick = async ()=>{
-  const {g,total} = rec();
-  const txt = 'Commande ('+orders.length+')\n'+Object.entries(g).map(([k,n])=>n+' x '+k).join('\n')
-    +'\n\nDétail :\n'+orders.map(o=>'- '+o.name+' : '+describe(o)+' ['+eur(orderPrice(o))+', '+(o.payment||'?')+']').join('\n')+'\nTotal : '+eur(total);
+  const wasG = grouped; grouped = true; const {list} = rows(); grouped = wasG;
+  const meal = o => [(dishOf(o.dish)||{name:o.dish}).name, meatsText(o.meats), (o.sauces&&o.sauces.length)?'sauce '+o.sauces.join(' + '):'sans sauce', o.fries?'avec frites':'sans frites', o.note?'('+o.note+')':null].filter(Boolean).join(', ');
+  const dr = {}; orders.filter(o=>o.drink).forEach(o=>{ dr[o.drink]=(dr[o.drink]||0)+1; });
+  const total = orders.reduce((s,o)=>s+orderPrice(o),0);
+  const txt = 'Commande ('+orders.length+')\n'+list.map(o=>o.qty+' x '+meal(o)).join('\n')
+    +'\n\nBoissons :\n'+(Object.keys(dr).length?Object.entries(dr).map(([k,n])=>n+' x '+k).join('\n'):'aucune')
+    +'\n\nDétail :\n'+orders.map(o=>'- '+o.name+' : '+meal(o)+(o.drink?', '+o.drink:'')+' ['+eur(orderPrice(o))+', '+(o.payment||'?')+']').join('\n')+'\nTotal : '+eur(total);
   try{ await navigator.clipboard.writeText(txt); $('copied').classList.remove('hide'); setTimeout(()=>$('copied').classList.add('hide'),1800); }catch(e){}
 };
+load(); loadStatus();
 </script>
 </body>
 </html>
