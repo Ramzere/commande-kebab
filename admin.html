@@ -102,7 +102,7 @@ table{width:100%;border-collapse:collapse}
   </div>
 </div>
 
-<script src="menu.js?v=20261119c"></script>
+<script src="menu.js?v=20261119d"></script>
 <script>
 const pass = 'azertyuiop'; // accès direct, sans écran de connexion
 let orders = [], open = true;
@@ -144,7 +144,7 @@ function cmp(a,b,spec){
 }
 // critères choisis (valides pour la vue) + départage dans l'ordre logique du choix
 function makeSpec(cols, nat){
-  const valid = sorts.filter(s=>cols.includes(s.k) && s.k!=='price');
+  const valid = sorts.filter(s=>cols.includes(s.k));
   const base = valid.length ? valid : [{k:'dish',dir:1}];
   const used = base.map(x=>x.k);
   return {valid: base, spec: base.concat(nat.filter(k=>!used.includes(k)).map(k=>({k,dir:1})))};
@@ -180,7 +180,7 @@ function render(){
     $('sortHint').textContent = ''; $('sortBar').innerHTML = '';
   } else {
     const {list, cols, spec, valid} = rows();
-    const sortable = c => c!=='price';
+    const sortable = c => true;
     const rank = c => valid.findIndex(v=>v.k===c);
     $('tbl').innerHTML = '<thead><tr>'+cols.map(c=>{ const r=rank(c); return '<th class="'+(sortable(c)?'s':'')+(r>=0?' on':'')+'" data-k="'+c+'">'+COLS[c].t+(r>=0?(valid[r].dir>0?' ▲':' ▼')+(valid.length>1?'<sup>'+(r+1)+'</sup>':''):'')+'</th>';}).join('')+(grouped?'':'<th></th>')+'</tr></thead><tbody>'
       + list.map(o=>'<tr>'+cols.map(c=>'<td class="'+(COLS[c].cls||'')+'">'+COLS[c].show(o)+'</td>').join('')
