@@ -102,13 +102,14 @@ const COLS = {
   meats:   {t:'Viande',   key:o=>meatsText(o.meats).toLowerCase(), show:o=>esc(meatsText(o.meats))},
   sauces:  {t:'Sauces',   key:o=>(o.sauces||[]).slice().sort().join('+').toLowerCase(), show:o=>(o.sauces&&o.sauces.length)?esc(o.sauces.join(' + ')):'—'},
   fries:   {t:'Frites',   key:o=>o.fries?1:0, show:o=>o.fries?'Avec':'Sans'},
+  drink:   {t:'Boisson',  key:o=>o.drink?1+idx(MENU.drinks,o.drink):0, show:o=>o.drink?esc(o.drink):'—'},
   payment: {t:'Paiement', key:o=>idx(MENU.payments,o.payment), show:o=>esc(o.payment||'?')},
   note:    {t:'Remarque', key:o=>(o.note||'').toLowerCase(), show:o=>esc(o.note||'')},
   qty:     {t:'Qté',      key:o=>o.qty, show:o=>'× '+o.qty, cls:'num'},
   price:   {t:'Prix',     key:o=>o.price, show:o=>eur(o.price), cls:'pr'}
 };
 // ordre de tri "logique" : plat → viande → sauces → frites → paiement → trigramme
-const NAT_DETAIL  = ['dish','meats','sauces','fries','payment','name','note'];
+const NAT_DETAIL  = ['dish','meats','sauces','fries','drink','payment','name','note'];
 const NAT_GROUPED = ['dish','meats','sauces','fries','note'];
 
 function cmp(a,b,keys){
@@ -125,7 +126,7 @@ function rows(){
   if(!grouped){
     const keys = [sortKey].concat(NAT_DETAIL.filter(k=>k!==sortKey));
     const list = orders.map(o=>Object.assign({},o,{price:orderPrice(o)})).sort((a,b)=>cmp(a,b,keys));
-    const cols = ['name','dish','meats','sauces','fries','payment'].concat(hasNote?['note']:[],['price']);
+    const cols = ['name','dish','meats','sauces','fries','drink','payment'].concat(hasNote?['note']:[],['price']);
     return {list, cols, keys};
   }
   const g = {};
