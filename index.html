@@ -99,7 +99,7 @@ input:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px var(--acc2
 
 </div>
 
-<script src="menu.js?v=20261119"></script>
+<script src="menu.js?v=20261119b"></script>
 <script>
 const st = {dish:null, meats:{}, sauces:[], fries:null, drink:null, payment:null}; // fries: true/false, drink: ''(none) | name
 
@@ -232,9 +232,22 @@ async function cancelMine(){
 
 $('name').oninput=()=>{ $('name').value=$('name').value.toUpperCase().replace(/[^A-Z]/g,'').slice(0,3); render(); }; $('note').oninput=render;
 let ordersOpen = true, round = 1;
+function sameOrder(a,b){
+  if(!a||!b) return false;
+  return ['name','dish','drink','note','payment'].every(k=>(a[k]||'')===(b[k]||'')) && !!a.fries===!!b.fries
+    && meatsText(a.meats)===meatsText(b.meats) && (a.sauces||[]).join('+')===(b.sauces||[]).join('+');
+}
 function isClosed(){ return !ordersOpen; }
 async function refreshStatus(){
   try{ const v = await rpc('get_status',{}); if(typeof v==='boolean') ordersOpen = v; }catch(e){}
+  try{
+    const mo = await rpc('get_my_order',{p_client_id:clientId});
+    if(mo && typeof mo==='object'){
+      if(!sameOrder(myOrder,mo)){
+        myOrder = Object.assign({}, mo, {round: round}); try{localStorage.setItem('myOrder',JSON.stringify(myOrder));}catch(e){} renderMine();
+      }
+    } else if(myOrder){ myOrder=null; try{localStorage.removeItem('myOrder');}catch(e){} renderMine(); }
+  }catch(e){}
   try{
     const r = await rpc('get_round',{});
     if(typeof r==='number'){

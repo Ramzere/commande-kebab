@@ -39,6 +39,22 @@ table{width:100%;border-collapse:collapse}
 .seg button.on{background:var(--acc);color:#fff}
 .chip{display:inline-block;background:var(--acc2);color:var(--acc);border-radius:8px;padding:2px 8px;margin:1px 4px 1px 0;font-weight:700;font-size:12px;letter-spacing:.06em}
 .hide{display:none}
+.ed-ov{position:fixed;inset:0;background:rgba(31,39,72,.55);display:flex;align-items:flex-start;justify-content:center;padding:16px;z-index:9998;overflow:auto}
+.ed{background:#fff;border-radius:20px;max-width:520px;width:100%;padding:20px;box-shadow:0 12px 40px rgba(0,0,0,.3);margin:auto}
+.ed h3{margin:0 0 12px;font-size:20px}
+.ed label{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--mut);margin:12px 0 4px;font-weight:700}
+.ed input,.ed select{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font:inherit;background:#fff;color:var(--ink)}
+.ed input:focus,.ed select:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px var(--acc2)}
+.ed .chips{display:flex;flex-wrap:wrap;gap:6px}
+.ed .ch{border:1px solid var(--line);border-radius:999px;padding:6px 12px;background:#fff;color:var(--ink);font:inherit;cursor:pointer}
+.ed .ch.on{border-color:var(--acc);background:var(--acc2);color:var(--acc);font-weight:700}
+.ed .mrow{display:flex;align-items:center;justify-content:space-between;border:1px solid var(--line);border-radius:999px;padding:4px 6px 4px 14px;margin-bottom:5px}
+.ed .mrow.on{border-color:var(--acc);background:var(--acc2)}
+.ed .mrow button{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:#fff;font-size:18px;cursor:pointer;color:var(--acc)}
+.ed .mrow button:disabled{opacity:.3;cursor:not-allowed}
+.ed .mrow b{min-width:34px;text-align:center;color:var(--acc)}
+.ed .err{color:var(--bad);font-size:13px;margin-top:10px}
+.ed .acts{display:flex;gap:10px;margin-top:16px}.ed .acts button{flex:1}
 </style>
 </head>
 <body>
@@ -80,7 +96,7 @@ table{width:100%;border-collapse:collapse}
   </div>
 </div>
 
-<script src="menu.js?v=20261119"></script>
+<script src="menu.js?v=20261119b"></script>
 <script>
 const pass = 'azertyuiop'; // accès direct, sans écran de connexion
 let orders = [], open = true;
@@ -156,13 +172,14 @@ function render(){
     const sortable = c => c!=='price';
     $('tbl').innerHTML = '<thead><tr>'+cols.map(c=>'<th class="'+(sortable(c)?'s':'')+(c===prim?' on':'')+'" data-k="'+c+'">'+COLS[c].t+(c===prim?(sortDir>0?' ▲':' ▼'):'')+'</th>').join('')+(grouped?'':'<th></th>')+'</tr></thead><tbody>'
       + list.map(o=>'<tr>'+cols.map(c=>'<td class="'+(COLS[c].cls||'')+'">'+COLS[c].show(o)+'</td>').join('')
-        +(grouped?'':'<td class="num"><button class="x" data-del="'+esc(o.id)+'">supprimer</button></td>')+'</tr>').join('')+'</tbody>';
+        +(grouped?'':'<td class="num"><button class="x" data-edit="'+esc(o.id)+'" style="color:var(--acc);margin-right:8px">modifier</button><button class="x" data-del="'+esc(o.id)+'">supprimer</button></td>')+'</tr>').join('')+'</tbody>';
     $('sortHint').textContent = 'Clique sur un titre de colonne pour trier. Ordre appliqué : '+keys.filter(k=>cols.includes(k)).map(k=>COLS[k].t).join(' → ')+'.';
     document.querySelectorAll('#tbl th.s').forEach(th=>th.onclick=()=>{
       const k = th.dataset.k;
       if(sortKey===k) sortDir = -sortDir; else { sortKey = k; sortDir = 1; }
       render();
     });
+    document.querySelectorAll('#tbl [data-edit]').forEach(b=>b.onclick=()=>editOrder(orders.find(o=>o.id===b.dataset.edit)));
     document.querySelectorAll('#tbl [data-del]').forEach(b=>b.onclick=async()=>{
       const who = (orders.find(o=>o.id===b.dataset.del)||{}).name;
       if(!await confirmBox('Êtes-vous sûr ?','Supprimer la commande de '+who+' ?','Supprimer')) return;
@@ -188,6 +205,66 @@ function render(){
   $('totals').innerHTML = '<table class="sum">'
     + pk.map(k=>'<tr><td>'+esc(k)+' · '+pay[k].n+' commande(s)</td><td>'+eur(pay[k].t)+'</td></tr>').join('')
     + '<tr><td><b>Total général</b></td><td>'+eur(total)+'</td></tr></table>';
+}
+
+// ---- Modification d'une commande ----
+function editOrder(o){
+  if(!o) return;
+  const st = {name:o.name||'', dish:o.dish, meats:Object.assign({},o.meats||{}), sauces:(o.sauces||[]).slice(), fries:!!o.fries, drink:o.drink||'', payment:o.payment||'', note:o.note||''};
+  const ov = document.createElement('div'); ov.className='ed-ov';
+  const box = document.createElement('div'); box.className='ed'; ov.appendChild(box);
+  const close = ()=>{ document.removeEventListener('keydown',onKey); ov.remove(); };
+  const onKey = e=>{ if(e.key==='Escape') close(); };
+  document.addEventListener('keydown',onKey);
+  const sum = m => Object.values(m).reduce((a,b)=>a+b,0);
+  const opt = (v,t,sel)=>'<option value="'+esc(v)+'"'+(sel?' selected':'')+'>'+esc(t)+'</option>';
+
+  function draw(){
+    const d = dishOf(st.dish) || MENU.dishes[0], max = d.meats;
+    if(d.fixedFries) st.fries = true;
+    while(sum(st.meats)>max){ const k=Object.keys(st.meats).pop(); st.meats[k]--; if(!st.meats[k]) delete st.meats[k]; }
+    const n = sum(st.meats);
+    box.innerHTML = '<h3>Modifier la commande</h3>'
+      +'<label>Trigramme</label><input id="e-name" maxlength="3" value="'+esc(st.name)+'" style="text-transform:uppercase;letter-spacing:.2em;font-weight:700">'
+      +'<label>Plat</label><select id="e-dish">'+MENU.dishes.map(x=>opt(x.id,x.name+' · '+eur(x.price),x.id===st.dish)).join('')+'</select>'
+      +'<label>Viande ('+n+'/'+max+')</label><div id="e-meats">'+MENU.meats.map(m=>{const c=st.meats[m]||0; return '<div class="mrow'+(c?' on':'')+'"><span>'+esc(m)+'</span><span><button type="button" data-m="'+esc(m)+'" data-d="-1"'+(c?'':' disabled')+'>−</button><b>'+(c?'x'+c:'')+'</b><button type="button" data-m="'+esc(m)+'" data-d="1"'+(n>=max&&max>1?' disabled':'')+'>+</button></span></div>';}).join('')+'</div>'
+      +'<label>Sauces (max '+MENU.maxSauces+')</label><div class="chips" id="e-sauces">'+MENU.sauces.map(s=>'<button type="button" class="ch'+(st.sauces.includes(s)?' on':'')+'" data-s="'+esc(s)+'">'+esc(s)+'</button>').join('')+'</div>'
+      +(d.fixedFries?'':'<label>Frites</label><select id="e-fries">'+opt('0','Sans frites',!st.fries)+opt('1','Avec frites',st.fries)+'</select>')
+      +'<label>Boisson</label><select id="e-drink">'+opt('','Sans boisson',!st.drink)+MENU.drinks.map(x=>opt(x,x,x===st.drink)).join('')+'</select>'
+      +'<label>Paiement</label><select id="e-pay">'+opt('','Non précisé',!st.payment)+MENU.payments.map(x=>opt(x,x,x===st.payment)).join('')+'</select>'
+      +'<label>Remarque</label><input id="e-note" maxlength="80" value="'+esc(st.note)+'">'
+      +'<div class="err hide" id="e-err"></div>'
+      +'<div class="acts"><button class="btn sec" id="e-cancel">Annuler</button><button class="btn" id="e-save">Enregistrer</button></div>';
+    $('e-name').oninput = e=>{ e.target.value = e.target.value.toUpperCase().replace(/[^A-Z]/g,'').slice(0,3); st.name = e.target.value; };
+    $('e-note').oninput = e=>{ st.note = e.target.value; };
+    $('e-dish').onchange = e=>{ st.dish = e.target.value; draw(); };
+    if($('e-fries')) $('e-fries').onchange = e=>{ st.fries = e.target.value==='1'; };
+    $('e-drink').onchange = e=>{ st.drink = e.target.value; };
+    $('e-pay').onchange = e=>{ st.payment = e.target.value; };
+    box.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{
+      const m = b.dataset.m, dl = +b.dataset.d, c = st.meats[m]||0;
+      if(dl>0 && sum(st.meats)>=max){ if(max===1){ st.meats={}; st.meats[m]=1; draw(); } return; }
+      st.meats[m] = Math.max(0,c+dl); if(!st.meats[m]) delete st.meats[m]; draw();
+    });
+    box.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{
+      const s = b.dataset.s;
+      if(st.sauces.includes(s)) st.sauces = st.sauces.filter(x=>x!==s);
+      else { if(st.sauces.length>=MENU.maxSauces) st.sauces.shift(); st.sauces.push(s); }
+      draw();
+    });
+    $('e-cancel').onclick = close;
+    $('e-save').onclick = async ()=>{
+      const err = $('e-err'); err.classList.add('hide');
+      if(!/^[A-Z]{3}$/.test(st.name)){ err.textContent='Le trigramme doit faire 3 lettres.'; err.classList.remove('hide'); return; }
+      if(sum(st.meats)!==max){ err.textContent='Choisis exactement '+max+' viande'+(max>1?'s':'')+'.'; err.classList.remove('hide'); return; }
+      $('e-save').disabled = true;
+      try{
+        await rpc('admin_update_order',{p_pass:pass,p_id:o.id,p_name:st.name,p_dish:st.dish,p_meats:st.meats,p_sauces:st.sauces,p_fries:st.fries,p_drink:st.drink,p_note:st.note.trim(),p_payment:st.payment});
+        close(); load();
+      }catch(e){ $('e-save').disabled=false; err.textContent='Échec de l\'enregistrement, réessaie.'; err.classList.remove('hide'); }
+    };
+  }
+  document.body.appendChild(ov); draw();
 }
 
 async function load(){
