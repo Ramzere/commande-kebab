@@ -29,7 +29,7 @@ const MENU = {
   payments: ['Ticket resto','Carte resto','Espèces','Wero'],
   cutoffHour: 11, // heure affichée dans le bandeau (l'ouverture/fermeture se fait depuis admin.html)
   payInfo: 'À déposer au bureau de RRO ou MBA avant 12h',
-  drinks: ['Coca','Coca zéro','Coca Cherry','Oasis tropical','Oasis pomme cassis'] // à compléter
+  drinks: ['Coca','Coca zéro','Coca Cherry','Oasis tropical','Oasis pomme cassis','Ice tea'] // à compléter
 };
 // =========================================
 
